@@ -1,4 +1,4 @@
-const { stdin, stdout } = process;
+const { stdin } = process;
 const fs = require('fs');
 const path = require('path');
 const textFile = path.join(__dirname, 'text.txt');
