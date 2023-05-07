@@ -1,7 +1,7 @@
-const { readdir, copyFile } = require('fs/promises');
 const fsProm = require('fs/promises');
 const fs = require('fs');
 const path = require('path');
+const { open, readdir, copyFile } = require('fs/promises');
 
 const stylesPath = path.join(__dirname, 'styles');
 const bundlePath = path.join(__dirname, 'project-dist');
@@ -64,11 +64,41 @@ const copyFolder = async (bundleFolder, assetsFolder) => {
     });
   }
 };
+//maleBundleHtml 
+
+
+const htmlTemplate = path.join(__dirname, 'template.html');
+const componentsFolder = path.join(__dirname, 'components');
+
+
+const changeStr = async (templateStr) => {
+  const componentsData = await readdir(componentsFolder);
+  let finalStr;
+  for (const component of componentsData) {
+    const tagName = component.split('.')[0];
+    const componentFilePath = await open(path.join(componentsFolder, component));
+    const componentFile = (await componentFilePath.readFile()).toString();
+    const regexp = new RegExp(`{{${tagName}}}`);
+    finalStr = finalStr ? finalStr.replace(regexp, componentFile) : templateStr.replace(regexp, componentFile);
+  }
+  return finalStr;
+};
+
+const makeHtmlBundle = async (template, componentsFolder, bundlePath) => {
+  const bundleFile = path.join(bundlePath, 'index.html');
+  
+
+  const file = await open(template);
+  const templateStr = (await file.readFile()).toString();
+  const finalStr = await changeStr(templateStr);
+  await fsProm.writeFile(bundleFile, finalStr);
+};
 
 const finalBundle = async () => {
   await makeDir(bundlePath);
   await makeCssBundle(bundlePath, stylesPath);
   await copyFolder(copiedAssetsPath, assetsPath);
+  await makeHtmlBundle(htmlTemplate, componentsFolder, bundlePath);
 };
 finalBundle();
 
